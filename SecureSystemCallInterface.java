@@ -6,16 +6,23 @@ public class SecureSystemCallInterface {
 
     private static final int MAX_LOGIN_ATTEMPTS = 3;
     private static Map<String, String> userDatabase = new HashMap<>();
+    private static Map<String, String> userRoles = new HashMap<>();
     private static Map<String, Integer> loginAttempts = new HashMap<>();
     private static List<String> systemCallLogs = new ArrayList<>();
     private static Map<String, Integer> systemCallCounts = new HashMap<>();
 
     static {
-        // Initialize with some users
+        // Initialize users with their roles
         userDatabase.put("admin", "password123");
         userDatabase.put("user1", "pass1");
         userDatabase.put("user2", "securePass2");
         userDatabase.put("guest", "guest123");
+
+        // Assign roles
+        userRoles.put("admin", "ADMIN");  // Full access
+        userRoles.put("user1", "USER");   // Limited access
+        userRoles.put("user2", "USER");
+        userRoles.put("guest", "GUEST");  // Restricted access
     }
 
     public static void main(String[] args) {
@@ -30,7 +37,8 @@ public class SecureSystemCallInterface {
                 break;
             }
 
-            runMenu(username, scanner);
+            String role = userRoles.get(username);
+            runMenu(username, role, scanner);
         }
 
         scanner.close();
@@ -51,7 +59,7 @@ public class SecureSystemCallInterface {
             password = scanner.nextLine();
 
             if (authenticateUser(username, password)) {
-                System.out.println("Authentication Successful!");
+                System.out.println("Authentication Successful! Role: " + userRoles.get(username));
                 logSystemCall(username, "Login Successful");
                 return username;
             } else {
@@ -70,11 +78,15 @@ public class SecureSystemCallInterface {
         return userDatabase.containsKey(username) && userDatabase.get(username).equals(password);
     }
 
-    private static void runMenu(String username, Scanner scanner) {
+    private static void runMenu(String username, String role, Scanner scanner) {
         while (true) {
             System.out.println("\n1. Check Disk Space");
             System.out.println("2. View Logs");
-            System.out.println("3. Show Usage Stats");
+            
+            if (!role.equals("GUEST")) {
+                System.out.println("3. Show Usage Stats");
+            }
+            
             System.out.println("4. Logout & Switch User");
             System.out.println("5. Logout & Exit");
             System.out.print("Enter your choice: ");
@@ -85,9 +97,17 @@ public class SecureSystemCallInterface {
             if (choice == 1) {
                 checkDiskSpace(username);
             } else if (choice == 2) {
-                viewLogs();
+                if (role.equals("GUEST")) {
+                    System.out.println("Access Denied: Guests cannot view logs.");
+                } else {
+                    viewLogs();
+                }
             } else if (choice == 3) {
-                showUsageStats();
+                if (role.equals("ADMIN")) {
+                    showUsageStats();
+                } else {
+                    System.out.println("Access Denied: Only Admins can view usage stats.");
+                }
             } else if (choice == 4) {
                 System.out.println("Logging out...\n");
                 logSystemCall(username, "Logged out");
