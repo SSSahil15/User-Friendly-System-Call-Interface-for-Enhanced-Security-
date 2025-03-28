@@ -1,12 +1,13 @@
 import java.util.*;
+import java.util.concurrent.*;
 
 public class SecureSystemCallInterface {
 
-    private static Map<String, String> userDatabase = new HashMap<>();
-    private static List<String> systemCallLogs = new ArrayList<>();
+    private static final Map<String, String> userDatabase = new ConcurrentHashMap<>();
+    private static final List<String> systemCallLogs = new CopyOnWriteArrayList<>();
 
     static {
-        // Initialize with some users
+        // Initialize users
         userDatabase.put("admin", "password123");
         userDatabase.put("user1", "pass1");
         userDatabase.put("user2", "securePass2");
@@ -15,7 +16,6 @@ public class SecureSystemCallInterface {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-
         System.out.println("--- Secure System Call Interface ---");
 
         System.out.print("Enter Username: ");
@@ -56,14 +56,13 @@ public class SecureSystemCallInterface {
     }
 
     private static void performSystemCall(String username) {
-        // Example system call
         String systemCall = "Checked Disk Space";
         logSystemCall(username, systemCall);
         System.out.println("System Call Performed: " + systemCall);
     }
 
     private static void logSystemCall(String username, String action) {
-        String logEntry = "User: " + username + " | Action: " + action + " | Timestamp: " + new Date().toString();
+        String logEntry = "User: " + username + " | Action: " + action + " | Timestamp: " + new Date();
         systemCallLogs.add(logEntry);
     }
 
@@ -73,4 +72,4 @@ public class SecureSystemCallInterface {
             System.out.println(log);
         }
     }
-} 
+}
