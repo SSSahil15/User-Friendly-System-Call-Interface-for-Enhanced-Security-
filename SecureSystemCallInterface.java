@@ -23,41 +23,47 @@ public class SecureSystemCallInterface {
 
         System.out.println("--- Secure System Call Interface ---");
 
+        while (true) {
+            String username = login(scanner);
+            if (username == null) {
+                System.out.println("Too many failed attempts. Exiting...");
+                break;
+            }
+
+            runMenu(username, scanner);
+        }
+
+        scanner.close();
+    }
+
+    private static String login(Scanner scanner) {
         String username;
         String password;
-        boolean authenticated = false;
+        int attempts = 0;
 
         System.out.print("Enter Username: ");
         username = scanner.nextLine();
 
         loginAttempts.putIfAbsent(username, 0); // Track login attempts
 
-        for (int attempt = 1; attempt <= MAX_LOGIN_ATTEMPTS; attempt++) {
+        while (attempts < MAX_LOGIN_ATTEMPTS) {
             System.out.print("Enter Password: ");
             password = scanner.nextLine();
 
             if (authenticateUser(username, password)) {
                 System.out.println("Authentication Successful!");
-                authenticated = true;
                 logSystemCall(username, "Login Successful");
-                runMenu(username, scanner);
-                break;
+                return username;
             } else {
-                loginAttempts.put(username, loginAttempts.get(username) + 1);
-                int remainingAttempts = MAX_LOGIN_ATTEMPTS - loginAttempts.get(username);
+                attempts++;
+                loginAttempts.put(username, attempts);
+                int remainingAttempts = MAX_LOGIN_ATTEMPTS - attempts;
                 System.out.println("Authentication Failed. Try again. (" + remainingAttempts + " attempts left)");
                 logSystemCall(username, "Failed Login Attempt");
-                if (remainingAttempts == 0) {
-                    System.out.println("Too many failed login attempts. Exiting...");
-                    scanner.close();
-                    return;
-                }
             }
         }
 
-        if (!authenticated) {
-            scanner.close();
-        }
+        return null; // Too many failed attempts
     }
 
     private static boolean authenticateUser(String username, String password) {
@@ -65,10 +71,14 @@ public class SecureSystemCallInterface {
     }
 
     private static void runMenu(String username, Scanner scanner) {
-        System.out.println("1. Check Disk Space\n2. View Logs\n3. Show Usage Stats\n4. Exit");
-
         while (true) {
+            System.out.println("\n1. Check Disk Space");
+            System.out.println("2. View Logs");
+            System.out.println("3. Show Usage Stats");
+            System.out.println("4. Logout & Switch User");
+            System.out.println("5. Logout & Exit");
             System.out.print("Enter your choice: ");
+
             int choice = scanner.nextInt();
             scanner.nextLine(); // Consume newline
 
@@ -79,8 +89,13 @@ public class SecureSystemCallInterface {
             } else if (choice == 3) {
                 showUsageStats();
             } else if (choice == 4) {
-                System.out.println("Exiting...");
-                break;
+                System.out.println("Logging out...\n");
+                logSystemCall(username, "Logged out");
+                return; // Return to login screen
+            } else if (choice == 5) {
+                System.out.println("Logging out and exiting...");
+                logSystemCall(username, "Logged out and exited");
+                System.exit(0);
             } else {
                 System.out.println("Invalid choice. Try again.");
             }
