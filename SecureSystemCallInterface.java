@@ -1,5 +1,7 @@
 import java.util.*;
 import java.util.concurrent.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public class SecureSystemCallInterface {
 
@@ -7,15 +9,15 @@ public class SecureSystemCallInterface {
     private static final List<String> systemCallLogs = new CopyOnWriteArrayList<>();
 
     static {
-        // Initialize users
-        userDatabase.put("admin", "password123");
-        userDatabase.put("user1", "pass1");
-        userDatabase.put("user2", "securePass2");
-        userDatabase.put("guest", "guest123");
+        userDatabase.put("admin", hashPassword("password123"));
+        userDatabase.put("user1", hashPassword("pass1"));
+        userDatabase.put("user2", hashPassword("securePass2"));
+        userDatabase.put("guest", hashPassword("guest123"));
     }
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+
         System.out.println("--- Secure System Call Interface ---");
 
         System.out.print("Enter Username: ");
@@ -52,7 +54,23 @@ public class SecureSystemCallInterface {
     }
 
     private static boolean authenticateUser(String username, String password) {
-        return userDatabase.containsKey(username) && userDatabase.get(username).equals(password);
+        return userDatabase.containsKey(username) && userDatabase.get(username).equals(hashPassword(password));
+    }
+
+    private static String hashPassword(String password) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(password.getBytes());
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Error hashing password");
+        }
     }
 
     private static void performSystemCall(String username) {
@@ -62,7 +80,7 @@ public class SecureSystemCallInterface {
     }
 
     private static void logSystemCall(String username, String action) {
-        String logEntry = "User: " + username + " | Action: " + action + " | Timestamp: " + new Date();
+        String logEntry = "User: " + username + " | Action: " + action + " | Timestamp: " + new Date().toString();
         systemCallLogs.add(logEntry);
     }
 
