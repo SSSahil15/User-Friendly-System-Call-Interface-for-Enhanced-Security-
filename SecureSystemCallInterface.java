@@ -1,4 +1,5 @@
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class SecureSystemCallInterface {
@@ -29,8 +30,7 @@ public class SecureSystemCallInterface {
         System.out.print("Enter Username: ");
         username = scanner.nextLine();
 
-        // Initialize login attempts count if user is new
-        loginAttempts.putIfAbsent(username, 0);
+        loginAttempts.putIfAbsent(username, 0); // Track login attempts
 
         for (int attempt = 1; attempt <= MAX_LOGIN_ATTEMPTS; attempt++) {
             System.out.print("Enter Password: ");
@@ -39,14 +39,15 @@ public class SecureSystemCallInterface {
             if (authenticateUser(username, password)) {
                 System.out.println("Authentication Successful!");
                 authenticated = true;
+                logSystemCall(username, "Login Successful");
                 runMenu(username, scanner);
-                break; // Exit the login loop
+                break;
             } else {
                 loginAttempts.put(username, loginAttempts.get(username) + 1);
                 int remainingAttempts = MAX_LOGIN_ATTEMPTS - loginAttempts.get(username);
-                if (remainingAttempts > 0) {
-                    System.out.println("Authentication Failed. Try again. (" + remainingAttempts + " attempts left)");
-                } else {
+                System.out.println("Authentication Failed. Try again. (" + remainingAttempts + " attempts left)");
+                logSystemCall(username, "Failed Login Attempt");
+                if (remainingAttempts == 0) {
                     System.out.println("Too many failed login attempts. Exiting...");
                     scanner.close();
                     return;
@@ -88,9 +89,9 @@ public class SecureSystemCallInterface {
 
     private static void checkDiskSpace(String username) {
         File root = new File("/");
-        long totalSpace = root.getTotalSpace(); // Total disk space
-        long freeSpace = root.getFreeSpace();   // Free space
-        long usedSpace = totalSpace - freeSpace; // Used space
+        long totalSpace = root.getTotalSpace();
+        long freeSpace = root.getFreeSpace();
+        long usedSpace = totalSpace - freeSpace;
 
         System.out.println("\n--- Disk Space Details ---");
         System.out.printf("Total Space : %.2f GB\n", totalSpace / 1e9);
@@ -103,15 +104,25 @@ public class SecureSystemCallInterface {
     }
 
     private static void logSystemCall(String username, String action) {
-        String logEntry = "User: " + username + " | Action: " + action + " | Timestamp: " + new Date();
+        String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
+        String logEntry = String.format("[%s] User: %-10s | Action: %s", timestamp, username, action);
         systemCallLogs.add(logEntry);
     }
 
     private static void viewLogs() {
-        System.out.println("--- System Call Logs ---");
+        if (systemCallLogs.isEmpty()) {
+            System.out.println("\n--- No System Call Logs Available ---\n");
+            return;
+        }
+
+        System.out.println("\n--- System Call Logs ---");
+        System.out.printf("%-25s %-12s %-25s\n", "Timestamp", "User", "Action");
+        System.out.println("---------------------------------------------------------------");
+
         for (String log : systemCallLogs) {
             System.out.println(log);
         }
+        System.out.println("---------------------------------------------------------------\n");
     }
 
     private static void showUsageStats() {
