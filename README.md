@@ -73,4 +73,4 @@ To enable OTP email verification:
 
 ## 👨‍💻 Author
 
-Developed by **Shahil Bhardwaj**
+Developed by **Shahil Bhardwaj | Sahil Ansari | Biprant**
